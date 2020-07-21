@@ -25,7 +25,7 @@ testCase:
         skip: false
         reinstall: false 
         uninstall: true
-        upgradeFromVersion: stable-2.7.0
+        upgradeFromVersion: stable-2.7.1
     inject:
         skip: false
         clean: true
