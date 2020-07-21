@@ -1,0 +1,22 @@
+name: Static Checks
+on:
+    pull_request: {}
+jobs:
+    go_lint:
+        name: Go Lint
+        runs-on: ubuntu-18.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@master
+            - name: Run linter
+              run: |
+                  bin/lint --verbose
+    go_formant:
+        name: Go Format
+        runs-on: ubuntu-18.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@master
+            - name: Run formatter
+              run: |
+                  bin/fmt

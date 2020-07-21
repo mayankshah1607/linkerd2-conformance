@@ -1,0 +1,12 @@
+name: KinD Conformance Tests 
+on:
+  pull_request: {}
+jobs:
+  kind_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: engineerd/setup-kind@v0.4.0
+    - name: Running conformance tests in KinD cluster
+      run: |
+          go test -timeout 1h -ginkgo.v
