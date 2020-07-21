@@ -1,6 +1,7 @@
 name: Static Checks
 on:
     pull_request: {}
+    push: {}
 jobs:
     go_lint:
         name: Go Lint
