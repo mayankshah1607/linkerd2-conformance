@@ -1,6 +1,7 @@
 name: KinD Conformance Tests 
 on:
   pull_request: {}
+  push: {}
 jobs:
   kind_tests:
     runs-on: ubuntu-latest
