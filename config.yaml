@@ -34,3 +34,4 @@ testCase:
         config:
             controllers:
                 - nginx
+                - traefik

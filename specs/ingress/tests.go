@@ -11,6 +11,17 @@ import (
 	"github.com/onsi/gomega"
 )
 
+var (
+	nginx   = "nginx"
+	traefik = "traefik"
+
+	nginxNs   = "ingress-nginx"
+	traefikNs = "kube-system"
+
+	nginxController   = "ingress-nginx-controller"
+	traefikController = "traefik-ingress-controller"
+)
+
 func pingEmojivoto(ip string) error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s", ip), nil)
 	if err != nil {
@@ -58,40 +69,45 @@ func getExternalIP(svc, ns string) (string, error) {
 	return strings.Trim(ip, "'"), nil
 }
 
-func testNginx() {
+func testIngress(ingressName, deploy, ns, controllerYAMLPath, resourceYAMLPath string) {
 	h, _ := utils.GetHelperAndConfig()
-	ginkgo.By("Creating ingress-nginx controller")
-	_, err := h.Kubectl("", "apply", "-f", "testdata/ingress/controllers/nginx.yaml")
 
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create controller: %s", utils.Err(err)))
+	utils.TestEmojivotoApp()
+	utils.TestEmojivotoInject()
 
-	err = h.CheckPods(utils.NginxNs, utils.NginxController, 1)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
+	ginkgo.By(fmt.Sprintf("Creating %s controller", ingressName))
+	_, err := h.Kubectl("", "apply", "-f", controllerYAMLPath)
 
-	ginkgo.By("Injecting linkerd into the ingress controller pods")
-	out, err := h.Kubectl("", "get", "-n", utils.NginxNs, "deploy", utils.NginxController, "-o", "yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to get YAML manifest for deploy/%s: %s", utils.NginxController, utils.Err(err)))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create %s controller: %s", ingressName, utils.Err(err)))
+
+	err = h.CheckPods(ns, deploy, 1)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify %s controller pods: %s", ingressName, utils.Err(err)))
+
+	ginkgo.By(fmt.Sprintf("Injecting linkerd into %s ingress controller pods", ingressName))
+	out, err := h.Kubectl("", "get", "-n", ns, "deploy", deploy, "-o", "yaml")
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to get YAML manifest for deploy/%s: %s", deploy, utils.Err(err)))
 
 	out, stderr, err := h.PipeToLinkerdRun(out, "inject", "-")
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject: %s", stderr))
 
-	_, err = h.KubectlApply(out, utils.NginxNs)
+	_, err = h.KubectlApply(out, ns)
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected manifests: %s", utils.Err(err)))
 
-	err = h.CheckPods(utils.NginxNs, utils.NginxController, 1)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
+	err = h.CheckPods(ns, deploy, 1)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify %s controller pods: %s", ingressName, utils.Err(err)))
 
-	ginkgo.By("Verifying if ingress controller pods have been injected")
+	ginkgo.By(fmt.Sprintf("Verifying if %s ingress controller pods have been injected", ingressName))
+
 	// Wait upto 3mins for proxy container to show up
-	err = utils.CheckProxyContainer(utils.NginxController, utils.NginxNs)
+	err = utils.CheckProxyContainer(deploy, ns)
 	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
 
 	ginkgo.By("Applying ingress resource")
-	_, err = h.Kubectl("", "apply", "-f", "testdata/ingress/resources/nginx.yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create ingress resource: %s", utils.Err(err)))
+	_, err = h.Kubectl("", "apply", "-f", resourceYAMLPath)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create %s ingress resource: %s", ingressName, utils.Err(err)))
 
 	ginkgo.By("Checking if emojivoto is reachable")
-	ip, err := getExternalIP(utils.NginxController, utils.NginxNs)
+	ip, err := getExternalIP(deploy, ns)
 	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
 
 	err = h.RetryFor(3*time.Minute, func() error {
@@ -100,8 +116,27 @@ func testNginx() {
 
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
 
-	ginkgo.By(fmt.Sprintf("Removing ingress controller in namespace %s", utils.NginxNs))
-	_, err = h.Kubectl("", "delete", "ns", utils.NginxNs)
+	ginkgo.By(fmt.Sprintf("Removing %s ingress controller", ns))
 
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete resources in namespace %s", utils.NginxNs))
+	_, err = h.Kubectl("", "delete", "-f", controllerYAMLPath)
+	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
+
+	ginkgo.By("Uninstalling emojivoto")
+	utils.TestEmojivotoUninstall()
+}
+
+func testNginx() {
+	var (
+		nginxControllerYAML = "testdata/ingress/controllers/nginx.yaml"
+		nginxResourceYAML   = "testdata/ingress/resources/nginx.yaml"
+	)
+	testIngress(nginx, nginxController, nginxNs, nginxControllerYAML, nginxResourceYAML)
+}
+
+func testTraefik() {
+	var (
+		traefikControllerYAML = "testdata/ingress/controllers/traefik.yaml"
+		traefikResourceYAML   = "testdata/ingress/resources/traefik.yaml"
+	)
+	testIngress(traefik, traefikController, traefikNs, traefikControllerYAML, traefikResourceYAML)
 }

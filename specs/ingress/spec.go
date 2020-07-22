@@ -1,9 +1,15 @@
 package ingress
 
 import (
+	"fmt"
+
 	"github.com/linkerd/linkerd2-conformance/utils"
 	"github.com/onsi/ginkgo"
 )
+
+func specMessage(controllerName string) string {
+	return fmt.Sprintf("can work with %s ingress controller", controllerName)
+}
 
 // RunIngressTests runs the specs for ingress
 func RunIngressTests() bool {
@@ -12,13 +18,12 @@ func RunIngressTests() bool {
 
 		_ = utils.ShouldTestSkip(c.SkipIngress(), "Skipping ingress tests")
 
-		ginkgo.It("can install and inject emojivoto app", func() {
-			utils.TestEmojivotoApp()
-			utils.TestEmojivotoInject()
-		})
+		if c.ShouldTestIngressOfType(nginx) {
+			ginkgo.It(specMessage(nginx), testNginx)
+		}
 
-		if c.ShouldTestIngressOfType(utils.Nginx) {
-			ginkgo.It("can work with nginx ingress controller", testNginx)
+		if c.ShouldTestIngressOfType(traefik) {
+			ginkgo.It(specMessage(traefik), testTraefik)
 		}
 
 		ginkgo.It("can uninstall emojivoto app", utils.TestEmojivotoUninstall)
