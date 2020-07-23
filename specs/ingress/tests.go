@@ -12,14 +12,17 @@ import (
 )
 
 var (
-	nginx   = "nginx"
-	traefik = "traefik"
+	nginx      = "nginx"
+	traefik    = "traefik"
+	ambassador = "ambassador"
 
-	nginxNs   = "ingress-nginx"
-	traefikNs = "kube-system"
+	nginxNs      = "ingress-nginx"
+	traefikNs    = "kube-system"
+	ambassadorNs = "ingress-ambassador"
 
-	nginxController   = "ingress-nginx-controller"
-	traefikController = "traefik-ingress-controller"
+	nginxController      = "ingress-nginx-controller"
+	traefikController    = "traefik-ingress-controller"
+	ambassadorController = "ambassador"
 )
 
 func pingEmojivoto(ip string) error {
@@ -121,7 +124,6 @@ func testIngress(ingressName, deploy, ns, controllerYAMLPath, resourceYAMLPath s
 	_, err = h.Kubectl("", "delete", "-f", controllerYAMLPath)
 	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
 
-	ginkgo.By("Uninstalling emojivoto")
 	utils.TestEmojivotoUninstall()
 }
 
@@ -139,4 +141,12 @@ func testTraefik() {
 		traefikResourceYAML   = "testdata/ingress/resources/traefik.yaml"
 	)
 	testIngress(traefik, traefikController, traefikNs, traefikControllerYAML, traefikResourceYAML)
+}
+
+func testAmbassador() {
+	var (
+		ambassadorControllerYAML = "testdata/ingress/controllers/ambassador.yaml"
+		ambassadorResourceYAML   = "testdata/ingress/resources/ambassador.yaml"
+	)
+	testIngress(ambassador, ambassadorController, ambassadorNs, ambassadorControllerYAML, ambassadorResourceYAML)
 }

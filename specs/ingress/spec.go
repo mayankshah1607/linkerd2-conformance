@@ -7,6 +7,26 @@ import (
 	"github.com/onsi/ginkgo"
 )
 
+type testRunner func()
+
+var testCases = []struct {
+	ingressType string
+	testRunner  testRunner
+}{
+	{
+		ingressType: nginx,
+		testRunner:  testNginx,
+	},
+	{
+		ingressType: traefik,
+		testRunner:  testTraefik,
+	},
+	{
+		ingressType: ambassador,
+		testRunner:  testAmbassador,
+	},
+}
+
 func specMessage(controllerName string) string {
 	return fmt.Sprintf("can work with %s ingress controller", controllerName)
 }
@@ -18,12 +38,13 @@ func RunIngressTests() bool {
 
 		_ = utils.ShouldTestSkip(c.SkipIngress(), "Skipping ingress tests")
 
-		if c.ShouldTestIngressOfType(nginx) {
-			ginkgo.It(specMessage(nginx), testNginx)
-		}
-
-		if c.ShouldTestIngressOfType(traefik) {
-			ginkgo.It(specMessage(traefik), testTraefik)
+		for _, tc := range testCases {
+			tc := tc //pin
+			if c.ShouldTestIngressOfType(tc.ingressType) {
+				ginkgo.It(specMessage(tc.ingressType), func() {
+					tc.testRunner()
+				})
+			}
 		}
 
 		ginkgo.It("can uninstall emojivoto app", utils.TestEmojivotoUninstall)
