@@ -119,7 +119,7 @@ func testIngress(ingressName, deploy, ns, controllerYAMLPath, resourceYAMLPath s
 
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
 
-	ginkgo.By(fmt.Sprintf("Removing %s ingress controller", ns))
+	ginkgo.By(fmt.Sprintf("Removing %s ingress controller", ingressName))
 
 	_, err = h.Kubectl("", "delete", "-f", controllerYAMLPath)
 	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))

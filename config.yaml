@@ -25,9 +25,9 @@ testCase:
         skip: false
         reinstall: false 
         uninstall: true
-        # upgradeFromVersion: stable-2.7.0
+        upgradeFromVersion: stable-2.7.0
     inject:
-        skip: true
+        skip: false
         clean: true
     ingress:
         skip: false

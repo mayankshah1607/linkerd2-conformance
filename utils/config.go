@@ -253,7 +253,7 @@ func (options *ConformanceTestOptions) GetInstallFlags() []string {
 
 // SkipIngress determines if ingress tests must be skipped
 func (options *ConformanceTestOptions) SkipIngress() bool {
-	return options.TestCase.Ingress.Skip
+	return options.TestCase.Ingress.Skip || len(options.TestCase.Ingress.Controllers) == 0
 }
 
 // ShouldTestIngressOfType checks if a given type of ingress must be tested

@@ -46,7 +46,5 @@ func RunIngressTests() bool {
 				})
 			}
 		}
-
-		ginkgo.It("can uninstall emojivoto app", utils.TestEmojivotoUninstall)
 	})
 }
