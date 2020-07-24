@@ -10,9 +10,10 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@master
             - name: Run linter
-              run: |
-                  bin/lint --verbose
-    go_formant:
+              uses: golangci/golangci-lint-action@v1
+              with:
+                  version: v1.29
+    go_format:
         name: Go Format
         runs-on: ubuntu-18.04
         steps:
