@@ -204,70 +204,110 @@ func RunBeforeAndAfterEachSetup() {
 	}
 }
 
-var (
-	emojivotoNs      = "emojivoto"
-	emojivotoDeploys = []string{"emoji", "voting", "web"}
-)
-
-func checkSampleAppState() {
+func checkSampleAppState(deploys map[string]int, appNs string) error {
 	h, _ := GetHelperAndConfig()
-	for _, deploy := range emojivotoDeploys {
-		if err := h.CheckPods(emojivotoNs, deploy, 1); err != nil {
+	for deploy, count := range deploys {
+		if err := h.CheckPods(appNs, deploy, count); err != nil {
 			if _, ok := err.(*testutil.RestartCountError); !ok { // err is not due to restart
-				ginkgo.Fail(fmt.Sprintf("failed to validate emojivoto pods: %s", err.Error()))
+				return fmt.Errorf("failed to validate emojivoto pods: %s", err.Error())
 			}
 		}
 
-		err := h.CheckDeployment(emojivotoNs, deploy, 1)
-		gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to validate deploy/%s: %s", deploy, Err(err)))
+		err := h.CheckDeployment(appNs, deploy, 1)
+		if err != nil {
+			fmt.Sprintf("failed to validate deploy/%s: %s", deploy, err.Error())
+		}
+	}
+	return nil
+}
+
+func installApp(manifestPath, appNs string) error {
+	h, _ := GetHelperAndConfig()
+
+	resources, err := testutil.ReadFile(manifestPath)
+	if err != nil {
+		return err
 	}
 
-	err := testutil.ExerciseTestAppEndpoint("/api/list", emojivotoNs, h)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to exercise emojivoto endpoint: %s", Err(err)))
+	_, err = h.KubectlApply(resources, appNs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // TestEmojivotoApp installs and checks if emojivoto app is installed
 // called of the function must have `testdata/emojivoto.yml`
 func TestEmojivotoApp() {
-	ginkgo.By("Installing emojivoto")
 	h, _ := GetHelperAndConfig()
-	resources, err := testutil.ReadFile("testdata/emojivoto.yml")
+
+	ginkgo.By("Installing emojivoto [sample application]")
+	err := installApp("testdata/emojivoto.yml", emojivotoNs)
 	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
 
-	_, err = h.KubectlApply(resources, emojivotoNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not apply emojivoto manifests to your cluster: %s", Err(err)))
-	checkSampleAppState()
+	err = checkSampleAppState(emojivotoDeploys, emojivotoNs)
+	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+
+	err = testutil.ExerciseTestAppEndpoint("/api/list", emojivotoNs, h)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to exercise emojivoto endpoint: %s", Err(err)))
+}
+
+func TestBooksappApp() {
+	ginkgo.By("Installing booksapp [sample application]")
+	err := installApp("testdata/booksapp.yaml", booksappNs)
+	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+
+	err = checkSampleAppState(booksappDeploys, booksappNs)
+	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
 }
 
 //TestEmojivotoInject installs and checks if emojivoto app is installed
-// called of the function must have `testdata/emojivoto.yml`
 func TestEmojivotoInject() {
-	ginkgo.By("Injecting emojivoto")
+	sampleAppInject(emojivotoNs, emojivotoDeploys)
+}
+
+func TestBooksappInject() {
+	sampleAppInject(booksappNs, booksappDeploys)
+}
+
+// TestEmojivotoUninstall tests if emojivoto can be successfull uninstalled
+func TestEmojivotoUninstall() {
+	sampleAppUninstall(emojivotoNs)
+}
+
+// TestBooksappUninstall tests if booksapp can be successfully uninjected
+func TestBooksappUninstall() {
+	sampleAppUninstall(booksappNs)
+}
+
+func sampleAppInject(appNs string, deploys map[string]int) {
+	ginkgo.By(fmt.Sprintf("Injecting sample app in namespace/%s", appNs))
 	h, _ := GetHelperAndConfig()
 
-	out, err := h.Kubectl("", "get", "deploy", "-n", emojivotoNs, "-o", "yaml")
+	out, err := h.Kubectl("", "get", "deploy", "-n", appNs, "-o", "yaml")
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to get manifests: %s", Err(err)))
 
 	out, stderr, err := h.PipeToLinkerdRun(out, "inject", "-")
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject: %s", stderr))
 
-	out, err = h.KubectlApply(out, emojivotoNs)
+	out, err = h.KubectlApply(out, appNs)
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected resources: %s", Err(err)))
-	checkSampleAppState()
 
-	for _, deploy := range emojivotoDeploys {
-		err := CheckProxyContainer(deploy, emojivotoNs)
+	err = checkSampleAppState(deploys, appNs)
+	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+
+	for deploy := range deploys {
+		err := CheckProxyContainer(deploy, appNs)
 		gomega.Expect(err).Should(gomega.BeNil(), Err(err))
 	}
 }
 
-// TestEmojivotoUninstall tests if emojivoto can be successfull uninstalled
-func TestEmojivotoUninstall() {
-	ginkgo.By("Uninstalling emojivoto")
+func sampleAppUninstall(appNs string) {
+	ginkgo.By(fmt.Sprintf("Uninstalling sample application in namespace %s", appNs))
 	h, _ := GetHelperAndConfig()
 
-	_, err := h.Kubectl("", "delete", "ns", emojivotoNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not delete namespace %s: %s", emojivotoNs, Err(err)))
+	_, err := h.Kubectl("", "delete", "ns", appNs)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not uninstall sample app in namespace %s: %s", appNs, Err(err)))
 }
 
 // CheckProxyContainer gets the pods from a deployment, and checks if the proxy container is present

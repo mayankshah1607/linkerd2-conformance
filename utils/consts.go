@@ -1,11 +1,28 @@
 package utils
 
+var (
+	emojivotoDeploys = map[string]int{
+		"emoji":  1,
+		"voting": 1,
+		"web":    1,
+	}
+
+	booksappDeploys = map[string]int{
+		"webapp":  3,
+		"authors": 1,
+		"books":   1,
+	}
+)
+
 const (
 	defaultNs            = "l5d-conformance"
 	defaultClusterDomain = "cluster.local"
 	defaultPath          = "/.linkerd2/bin/linkerd"
 
 	versionEndpointURL = "https://versioncheck.linkerd.io/version.json"
+
+	emojivotoNs = "emojivoto"
+	booksappNs  = "booksapp"
 
 	//TODO: move these to ConformanceTestOptions while writing Helm tests
 	helmPath        = "target/helm"
@@ -18,25 +35,10 @@ const (
 	multiclusterHelmChart       = "multicluster-helm-chart"
 	multiclusterHelmReleaseName = "multicluster-helm-release"
 
-	installEnv           = "LINKERD2_VERSION"
-	configFile           = "config.yaml"
-	linkerdInstallScript = "install.sh"
-	installScriptURL     = "https://run.linkerd.io/install"
-
-	// string literals for identifying the ingress controllers
-
-	// Nginx holds the string literal "nginx"
-	Nginx = "nginx"
-
-	// Traefik    = "traefik"
-	// GCE        = "gce"
-	// Ambassador = "ambassador"
-	// Gloo       = "gloo"
-	// Contour    = "contour"
-
-	// NginxNs is the namespace in which the nginx controller is installed
-	NginxNs = "ingress-nginx"
-
-	// NginxController is the name of the nginx controller
-	NginxController = "ingress-nginx-controller"
+	installEnv              = "LINKERD2_VERSION"
+	configFile              = "config.yaml"
+	linkerdInstallScript    = "install.sh"
+	glooctlInstallScript    = "gloo_install.sh"
+	linkerdInstallScriptURL = "https://run.linkerd.io/install"
+	glooctlInstallScriptURL = "https://run.solo.io/gloo/install"
 )

@@ -1,0 +1,26 @@
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: books
+  namespace: gloo-system
+spec:
+  virtualHost:
+    domains:
+    - '*'
+    name: gloo-system.books
+    routes:
+    - matcher:
+        prefix: /
+      routeAction:
+        single:
+          upstream:
+            name: booksapp-webapp-7000
+            namespace: gloo-system
+      routePlugins:
+        transformations:
+          requestTransformation:
+            transformationTemplate:
+              headers:
+                l5d-dst-override:
+                  text: webapp.booksapp.svc.cluster.local:7000
+                passthrough: {}

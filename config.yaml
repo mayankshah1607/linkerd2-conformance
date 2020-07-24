@@ -36,3 +36,4 @@ testCase:
                 - nginx
                 - traefik
                 - ambassador
+                - gloo

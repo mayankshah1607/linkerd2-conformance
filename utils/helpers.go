@@ -54,7 +54,7 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func fetchInstallScript() ([]byte, error) {
+func fetchInstallScript(installScriptURL string) ([]byte, error) {
 
 	req, err := http.NewRequest("GET", installScriptURL, nil)
 	if err != nil {
@@ -85,6 +85,53 @@ func createFileWithContent(data []byte, path string) error {
 	return nil
 }
 
+// InstallGlooctlBinary installs `glooctl`
+func InstallGlooctlBinary() error {
+	script, err := fetchInstallScript(glooctlInstallScriptURL)
+	if err != nil {
+		return err
+	}
+
+	if err = createFileWithContent(script, glooctlInstallScript); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("/bin/bash", glooctlInstallScript)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	if err := os.Remove(glooctlInstallScript); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getDefaultGlooPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s%s", home, "/.gloo/bin"), nil
+}
+
+// GlooctlRun runs a `glooctl` command
+func GlooctlRun(arg ...string) (string, error) {
+	path, err := getDefaultGlooPath()
+	if err != nil {
+		return "", err
+	}
+
+	glooctl := fmt.Sprintf("%s/%s", path, "glooctl")
+	cmd := exec.Command(glooctl, arg...)
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
 // InstallLinkerdBinary installs a linkerd2 binary of the given version
 func InstallLinkerdBinary(linkerd, version string, force bool, verbose bool) error {
 	if fileExists(linkerd) && !force {
@@ -92,7 +139,7 @@ func InstallLinkerdBinary(linkerd, version string, force bool, verbose bool) err
 		return nil
 	}
 
-	script, err := fetchInstallScript()
+	script, err := fetchInstallScript(linkerdInstallScriptURL)
 	if err != nil {
 		return err
 	}
