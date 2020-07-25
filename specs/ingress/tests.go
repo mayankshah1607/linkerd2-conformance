@@ -3,6 +3,7 @@ package ingress
 import (
 	"fmt"
 	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -16,15 +17,20 @@ var (
 	traefik    = "traefik"
 	ambassador = "ambassador"
 	gloo       = "gloo"
+	contour    = "contour"
 
 	nginxNs      = "ingress-nginx"
 	traefikNs    = "kube-system"
 	ambassadorNs = "ingress-ambassador"
 	glooNs       = "gloo-system"
+	contourNs    = "projectcontour"
+	kuardNs      = "default"
 
 	nginxController      = "ingress-nginx-controller"
 	traefikController    = "traefik-ingress-controller"
 	ambassadorController = "ambassador"
+	contourController    = "contour"
+	kuard                = "kuard"
 )
 
 func pingIP(ip string) error {
@@ -199,4 +205,75 @@ func testGloo() {
 
 	// Uninstall booksapp
 	utils.TestBooksappUninstall()
+}
+
+func kubectlRunPortforward() (*exec.Cmd, error) {
+	// kubectl port-forward svc/envoy -n projectcontour 3200:80
+	cmd := exec.Command("kubectl", "port-forward", "svc/envoy", "-n", contourNs, "3200:80")
+	if err := cmd.Start(); err != nil {
+		return cmd, err
+	}
+	return cmd, nil
+}
+
+func testContour() {
+	h, _ := utils.GetHelperAndConfig()
+	var (
+		contourControllerYAML = "testdata/ingress/controllers/contour.yaml"
+		contourResourceYAML   = "testdata/ingress/resources/contour.yaml"
+		kuardYAML             = "https://projectcontour.io/examples/kuard.yaml"
+	)
+	ginkgo.By("Installing and Injecting Contour")
+	_, err := h.Kubectl("", "apply", "-f", contourControllerYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to install Contour: %s", utils.Err(err)))
+
+	// verify contour installation
+	err = h.CheckDeployment(contourNs, contourController, 2)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("deploy/%s in namespace/%s does not have expected replicas", contourController, contourNs))
+	err = utils.CheckProxyContainer(contourController, contourNs)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not find proxy container for pods under deploy/%s", contourController))
+
+	ginkgo.By("Installing and injecting sample application [kuard]")
+	out, stderr, err := h.LinkerdRun("inject", kuardYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject sample application [kuard]: %s", stderr))
+
+	_, err = h.Kubectl(out, "apply", "-f", "-")
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to install sample application [kuard]: %s", utils.Err(err)))
+
+	// verify kuard installation
+	err = h.CheckDeployment(kuardNs, kuard, 3)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("deploy/%s in namespace/%s does not have expected replicas", kuard, kuardNs))
+	err = utils.CheckProxyContainer(kuard, kuardNs)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not find proxy container for pods under deploy/%s", kuard))
+
+	ginkgo.By("Install Contour resource to route traffic into sample application")
+	_, err = h.Kubectl("", "apply", "-f", contourResourceYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create ingress resource: %s", utils.Err(err)))
+
+	ginkgo.By("Verifying if sample application [kuard] is reachable")
+
+	// kubectl port-forward svc/envoy -n projectcontour 3200:80
+	process, err := kubectlRunPortforward()
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to enable port-forward:%s", utils.Err(err)))
+
+	err = h.RetryFor(time.Minute*5, func() error {
+		err = pingIP("http://127.0.0.1.xip.io:3200")
+		if err != nil {
+			return fmt.Errorf("sample application booksapp is not reachable")
+		}
+		return nil
+	})
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not reach sample application [kuard]: %s", utils.Err(err)))
+
+	ginkgo.By("Deleting sample application")
+	process.Process.Kill()
+	_, err = h.Kubectl("", "delete", "-f", kuardYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not delete sample application [kuard]: %s", utils.Err(err)))
+
+	ginkgo.By("Deleting ingress controller [Contour]")
+	_, err = h.Kubectl("", "delete", "--ignore-not-found", "-f", contourControllerYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not delete ingress controller: %s", utils.Err(err)))
+
+	_, err = h.Kubectl("", "delete", "-f", contourResourceYAML)
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not delete ingress resource: %s", utils.Err(err)))
 }

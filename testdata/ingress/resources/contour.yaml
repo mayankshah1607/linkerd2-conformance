@@ -1,0 +1,17 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: kuard
+  namespace: default
+spec:
+  routes:
+  - requestHeadersPolicy:
+      set:
+      - name: l5d-dst-override
+        value: kuard.default.svc.cluster.local:80
+    services:
+    - name: kuard
+      namespace: default
+      port: 80
+  virtualhost:
+    fqdn: 127.0.0.1.xip.io

@@ -29,6 +29,10 @@ var testCases = []struct {
 		ingressType: gloo,
 		testRunner:  testGloo,
 	},
+	{
+		ingressType: contour,
+		testRunner:  testContour,
+	},
 }
 
 func specMessage(controllerName string) string {
