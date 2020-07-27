@@ -40,9 +40,15 @@ type ControlPlane struct {
 	ControlPlaneConfig `yaml:"config,omitempty"`
 }
 
+type IngressControllerConfig struct {
+	Name    string `yaml:"name"`
+	Install bool   `yaml:"install"`
+	Clean   bool   `yaml:"clean"`
+}
+
 // IngressConfig holds the list of ingress controllers
 type IngressConfig struct {
-	Controllers []string `yaml:"controllers"`
+	Controllers []IngressControllerConfig `yaml:"controllers"`
 }
 
 // Ingress holds the configuration for ingress test
@@ -223,7 +229,7 @@ func (options *ConformanceTestOptions) HA() bool {
 
 // SkipLifecycle determines if install tests must be skipped
 func (options *ConformanceTestOptions) SkipLifecycle() bool {
-	return !options.SingleControlPlane() && options.TestCase.Lifecycle.Skip
+	return options.SingleControlPlane() && options.TestCase.Lifecycle.Skip
 }
 
 // CleanInject determines if resources created during inject test must be removed
@@ -256,7 +262,39 @@ func (options *ConformanceTestOptions) SkipIngress() bool {
 	return options.TestCase.Ingress.Skip || len(options.TestCase.Ingress.Controllers) == 0
 }
 
+// GetIngressControllerConfig returns a slice of IngressControllerConfig
+func (options *ConformanceTestOptions) GetIngressControllerConfig() *[]IngressControllerConfig {
+	return &options.TestCase.Ingress.IngressConfig.Controllers
+}
+
 // ShouldTestIngressOfType checks if a given type of ingress must be tested
 func (options *ConformanceTestOptions) ShouldTestIngressOfType(t string) bool {
-	return indexOf(options.TestCase.Ingress.IngressConfig.Controllers, t) > -1
+	for _, controllerConfig := range *options.GetIngressControllerConfig() {
+		if controllerConfig.Name == t {
+			return true
+		}
+	}
+	return false
+}
+
+// ShouldCleanIngressInstallation checks if a particular ingress installation
+// must be deleted post installation
+func (options *ConformanceTestOptions) ShouldCleanIngressInstallation(t string) bool {
+	for _, controllerConfig := range *options.GetIngressControllerConfig() {
+		controllerConfig := controllerConfig //pin
+		if controllerConfig.Name == t && controllerConfig.Clean {
+			return true
+		}
+	}
+	return false
+}
+
+// ShouldInstallIngressOfType checks if a particulat ingress type must be installed
+func (options *ConformanceTestOptions) ShouldInstallIngressOfType(t string) bool {
+	for _, controllerConfig := range *options.GetIngressControllerConfig() {
+		if controllerConfig.Name == t && controllerConfig.Install {
+			return true
+		}
+	}
+	return false
 }

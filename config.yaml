@@ -1,7 +1,7 @@
 linkerdVersion: stable-2.8.0
 externalIssuer: false
 controlPlane:
-    # namespace: l5d-conformance
+    namespace: l5d-conformance
     config:   
         ha: false
         flags:
@@ -25,7 +25,7 @@ testCase:
         skip: false
         reinstall: false 
         uninstall: true
-        upgradeFromVersion: stable-2.7.0
+        # upgradeFromVersion: stable-2.7.0
     inject:
         skip: false
         clean: true
@@ -33,8 +33,18 @@ testCase:
         skip: false
         config:
             controllers:
-                - nginx
-                - ambassador
-                - traefik
-                - gloo
-                - contour
+                - name: nginx
+                  install: true
+                  clean: true
+                - name: ambassador
+                  install: true
+                  clean: true
+                - name: traefik
+                  install: true
+                  clean: true
+                - name: gloo
+                  install: true
+                  clean: true
+                - name: contour
+                  install: true
+                  clean: true
