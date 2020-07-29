@@ -27,10 +27,13 @@ testCase:
         uninstall: true
         upgradeFromVersion: stable-2.7.1
     inject:
+        skip: true
+        clean: true
+    tap:
         skip: false
         clean: true
     ingress:
-        skip: false
+        skip: true
         config:
             controllers:
                 - nginx

@@ -11,12 +11,17 @@ func RunTapTests() bool {
 
 		_ = utils.ShouldTestSkip(c.SkipTap(), "Skipping tap tests")
 
+		ginkgo.It("creating sample application", testTapAppDeploy)
 		ginkgo.It("can tap a deployment", testTapDeploy)
 		ginkgo.It("can tap a deployment using context namespace", testTapDeployContextNs)
-		ginkgo.It("can tap a disabled deployment", testTapDisabledDeploy)
+		ginkgo.It("cannot tap a disabled deployment", testTapDisabledDeploy)
 		ginkgo.It("can tap a service call", testTapSvcCall)
 		ginkgo.It("can tap a pod", testTapPod)
 		ginkgo.It("can filter tap events by method", testTapFilterMethod)
 		ginkgo.It("can filter tap events by authority", testTapFilterAuthority)
+
+		if c.CleanTap() {
+			ginkgo.It("deleting sample application", testDeleteTapApp)
+		}
 	})
 }

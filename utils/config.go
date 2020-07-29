@@ -52,7 +52,8 @@ type Ingress struct {
 }
 
 type Tap struct {
-	Skip bool `yaml:"skip,omitempty"`
+	Skip  bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"clean,omitempty"`
 }
 
 // TestCase holds configuration of the various test cases
@@ -269,4 +270,9 @@ func (options *ConformanceTestOptions) ShouldTestIngressOfType(t string) bool {
 // SkipTap checks if tap tests should be skipped
 func (options *ConformanceTestOptions) SkipTap() bool {
 	return options.TestCase.Tap.Skip
+}
+
+// CleanTap checks if tap resources must be deleted
+func (options *ConformanceTestOptions) CleanTap() bool {
+	return options.TestCase.Tap.Clean
 }

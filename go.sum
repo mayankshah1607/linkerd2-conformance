@@ -48,6 +48,7 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/blang/semver v3.5.0+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/briandowns/spinner v0.0.0-20190212173954-5cf08d0ac778/go.mod h1:hw/JEQBIE+c/BLI4aKM8UU8v+ZqrD3h7HC27kKt8JQU=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
+github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.0 h1:yTUvW7Vhb89inJ+8irsUqiWjh8iT6sQPZiQzI6ReGkA=
 github.com/cespare/xxhash/v2 v2.1.0/go.mod h1:dgIUBU3pDso/gPgZ1osOZ0iQf77oPR28Tjxl5dIMyVM=
@@ -248,6 +249,7 @@ github.com/linkerd/linkerd2 v0.5.1-0.20200622174552-7f29717a6419 h1:Yb5N3KHsrIP2
 github.com/linkerd/linkerd2 v0.5.1-0.20200622174552-7f29717a6419/go.mod h1:GKLHD2+HfJP54O2/waRbsf5CLHHu6HBaeeONdxc40X4=
 github.com/linkerd/linkerd2 v0.5.1-0.20200629212941-f00c17e52a6f h1:Gc5tTnR/RWk5qXXCeQTYxRDBAGu0mlvuVTwhhlpYdUU=
 github.com/linkerd/linkerd2 v0.5.1-0.20200629212941-f00c17e52a6f/go.mod h1:sK1vuX+41Nd1yB6NQEjSNVCaQhlkkRWR7OLmm910ZLQ=
+github.com/linkerd/linkerd2 v0.5.1-0.20200729024817-96f662dfacf0 h1:RaFrWoF6B0Jid6+MbBfTXnDGCciwoMBt9o4utMsvtr8=
 github.com/linkerd/linkerd2 v0.5.1-0.20200729024817-96f662dfacf0/go.mod h1:v+zT2V8FP+6/M1YXTw+M/j969O5BG60UkYpcA+KaBS4=
 github.com/linkerd/linkerd2-proxy-api v0.1.12/go.mod h1:2WJHEYXoww5ALM6c1QspRFiROGZg08tGxCO1js0tTVA=
 github.com/linkerd/linkerd2-proxy-api v0.1.13/go.mod h1:Fpew8Tsm1D70GtuYg7km/PYeZRMUqlxIxwCrId/G+oQ=

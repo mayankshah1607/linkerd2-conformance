@@ -6,6 +6,7 @@ import (
 	"github.com/linkerd/linkerd2-conformance/specs/ingress"
 	"github.com/linkerd/linkerd2-conformance/specs/inject"
 	"github.com/linkerd/linkerd2-conformance/specs/lifecycle"
+	"github.com/linkerd/linkerd2-conformance/specs/tap"
 	"github.com/linkerd/linkerd2-conformance/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -40,6 +41,7 @@ func runPrimaryTests() bool {
 
 		// add primary tests here
 		_ = inject.RunInjectTests()
+		_ = tap.RunTapTests()
 		_ = ingress.RunIngressTests()
 
 		// a separate check for running uninstall must always occur at the end
