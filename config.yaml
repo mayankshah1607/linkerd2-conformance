@@ -25,15 +25,19 @@ testCase:
         skip: false
         reinstall: false 
         uninstall: true
+<<<<<<< HEAD
         upgradeFromVersion: stable-2.7.1
+=======
+        upgradeFromVersion: stable-2.7.0
+>>>>>>> Revert config.yaml
     inject:
-        skip: true
+        skip: false
         clean: true
     tap:
         skip: false
         clean: true
     ingress:
-        skip: true
+        skip: false
         config:
             controllers:
                 - nginx
