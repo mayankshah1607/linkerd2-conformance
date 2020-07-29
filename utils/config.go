@@ -51,11 +51,16 @@ type Ingress struct {
 	IngressConfig `yaml:"config,omitempty"`
 }
 
+type Tap struct {
+	Skip bool `yaml:"skip,omitempty"`
+}
+
 // TestCase holds configuration of the various test cases
 type TestCase struct {
 	Lifecycle `yaml:"lifecycle,omitempty"`
 	Inject    `yaml:"inject"`
 	Ingress   `yaml:"ingress"`
+	Tap       `yaml:"tap"`
 }
 
 // ConformanceTestOptions holds the values fed from the test config file
@@ -259,4 +264,9 @@ func (options *ConformanceTestOptions) SkipIngress() bool {
 // ShouldTestIngressOfType checks if a given type of ingress must be tested
 func (options *ConformanceTestOptions) ShouldTestIngressOfType(t string) bool {
 	return indexOf(options.TestCase.Ingress.IngressConfig.Controllers, t) > -1
+}
+
+// SkipTap checks if tap tests should be skipped
+func (options *ConformanceTestOptions) SkipTap() bool {
+	return options.TestCase.Tap.Skip
 }
