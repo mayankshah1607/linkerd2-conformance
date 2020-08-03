@@ -87,22 +87,6 @@ func testTapDeploy() {
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to validate tap: %s", utils.Err(err)))
 }
 
-func testTapDeployContextNs() {
-	h, _ := utils.GetHelperAndConfig()
-
-	out, err := h.Kubectl("", "config", "set-context", "--namespace="+prefixedNs, "--current")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to set context: %s", out))
-
-	events, err := testutil.Tap("deploy/t1", h)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("tap failed: %s", utils.Err(err)))
-
-	err = testutil.ValidateExpected(events, expectedT1)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to validate tap: %s", utils.Err(err)))
-
-	out, err = h.Kubectl("", "config", "set-context", "--namespace=default", "--current")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to set context to default: %s", out))
-}
-
 func testTapDisabledDeploy() {
 	h, _ := utils.GetHelperAndConfig()
 

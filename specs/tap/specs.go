@@ -13,7 +13,6 @@ func RunTapTests() bool {
 
 		ginkgo.It("creating sample application", testTapAppDeploy)
 		ginkgo.It("can tap a deployment", testTapDeploy)
-		ginkgo.It("can tap a deployment using context namespace", testTapDeployContextNs)
 		ginkgo.It("cannot tap a disabled deployment", testTapDisabledDeploy)
 		ginkgo.It("can tap a service call", testTapSvcCall)
 		ginkgo.It("can tap a pod", testTapPod)
