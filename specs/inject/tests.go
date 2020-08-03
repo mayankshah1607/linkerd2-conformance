@@ -52,9 +52,8 @@ func testInjectManual(withParams bool) {
 			"--proxy-log-level=warn",
 			"--enable-external-profiles",
 		}
-		for _, param := range params {
-			cmd = append(cmd, param)
-		}
+		cmd = append(cmd, params...)
+
 		golden = "inject/inject_params.golden"
 	} else {
 		golden = "inject/inject_default.golden"

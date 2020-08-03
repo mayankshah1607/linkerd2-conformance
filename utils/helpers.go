@@ -77,6 +77,10 @@ func fetchInstallScript() ([]byte, error) {
 
 func createFileWithContent(data []byte, path string) error {
 	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
 	defer file.Close()
 
 	if _, err = file.Write(data); err != nil {

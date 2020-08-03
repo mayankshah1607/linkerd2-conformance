@@ -94,9 +94,7 @@ func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOption
 	args := []string{}
 
 	// parse install flags from config
-	for _, flag := range c.GetInstallFlags() {
-		args = append(args, flag)
-	}
+	args = append(args, c.GetInstallFlags()...)
 
 	if len(c.GetAddons()) > 0 {
 
@@ -130,7 +128,7 @@ func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOption
 
 	ginkgo.By("Applying control plane manifests")
 	out, err = h.KubectlApply(out, "")
-	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply manifests: %s\n%s", Err(err), out))
 
 	TestControlPlanePostInstall(h)
 	RunCheck(h, false) // run post checks
@@ -155,7 +153,7 @@ func UninstallLinkerdControlPlane(h *testutil.TestHelper) {
 
 	ginkgo.By("Deleting resources from the cluster")
 	out, err = h.Kubectl(out, args...)
-	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete resources: %s\n%s", Err(err), out))
 
 	RunCheck(h, true) // run pre checks
 }
@@ -252,7 +250,7 @@ func TestEmojivotoInject() {
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject: %s", stderr))
 
 	out, err = h.KubectlApply(out, emojivotoNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected resources: %s", Err(err)))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected resources: %s\n%s", Err(err), out))
 	checkSampleAppState()
 
 	for _, deploy := range emojivotoDeploys {
