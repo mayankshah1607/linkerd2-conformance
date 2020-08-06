@@ -62,24 +62,25 @@ func RunCheck(h *testutil.TestHelper, pre bool) {
 
 	if pre {
 		cmd = append(cmd, "--pre")
-		ginkgo.By("Running pre-installation checks")
 	} else {
-		ginkgo.By("Running post-installation checks")
 	}
 
-	out, _, _ := h.LinkerdRun(cmd...)
+	out, stderr, err := h.LinkerdRun(cmd...)
+	ExpectNil(err,
+		"`linkerd check` command failed: %s\n%s",
+		out, stderr)
 
-	ginkgo.By("Validating `check` output")
-	err := json.Unmarshal([]byte(out), &checkResult)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to unmarshal check results JSON: %s", Err(err)))
-	gomega.Expect(checkResult.Success).Should(gomega.BeTrue(), fmt.Sprintf("`linkerd check failed: %s`\n Check errors: %s", Err(err), getFailedChecks(checkResult)))
+	err = json.Unmarshal([]byte(out), &checkResult)
+	ExpectNil(err, "failed to unmarshal check results JSON: %s", Err(err))
+	ExpectTrue(checkResult.Success,
+		"`linkerd check failed: %s`\n Check errors: %s",
+		Err(err), getFailedChecks(checkResult))
 }
 
 // InstallLinkerdControlPlane runs the control plane install tests
 func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOptions) {
 	withHA := c.HA()
 
-	ginkgo.By(fmt.Sprintf("Installing linkerd control plane with HA: %v", withHA))
 	RunCheck(h, true) // run pre checks
 
 	if err := h.CheckIfNamespaceExists(h.GetLinkerdNamespace()); err == nil {
@@ -101,13 +102,14 @@ func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOption
 		addOnFile := "../../addons.yaml"
 		if !fileExists(addOnFile) {
 			out, err := c.GetAddOnsYAML()
-			gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to produce add-on config file: %s", Err(err)))
+			ExpectNil(err,
+				"failed to produce add-on config file: %s\n%s",
+				out, Err(err))
 
 			err = createFileWithContent(out, addOnFile)
-			gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to write add-ons to YAML: %s", Err(err)))
+			ExpectNil(err, "failed to write add-ons to YAML: %s", Err(err))
 		}
 
-		ginkgo.By(fmt.Sprintf("Using add-ons file %s", addOnFile))
 		args = append(args, "--addon-config")
 		args = append(args, addOnFile)
 	}
@@ -122,11 +124,10 @@ func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOption
 
 	exec := append([]string{cmd}, args...)
 
-	ginkgo.By("Running `linkerd install`")
 	out, stderr, err := h.LinkerdRun(exec...)
-	gomega.Expect(err).Should(gomega.BeNil(), stderr)
+	ExpectNil(err,
+		"`linkerd install` command failed: %s\n%s", out, stderr)
 
-	ginkgo.By("Applying control plane manifests")
 	out, err = h.KubectlApply(out, "")
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply manifests: %s\n%s", Err(err), out))
 
@@ -137,7 +138,6 @@ func InstallLinkerdControlPlane(h *testutil.TestHelper, c *ConformanceTestOption
 // UninstallLinkerdControlPlane runs the test for
 // control plane uninstall
 func UninstallLinkerdControlPlane(h *testutil.TestHelper) {
-	ginkgo.By("Uninstalling linkerd control plane")
 	cmd := "install"
 	args := []string{
 		"--ignore-cluster",
@@ -145,13 +145,10 @@ func UninstallLinkerdControlPlane(h *testutil.TestHelper) {
 
 	exec := append([]string{cmd}, args...)
 
-	ginkgo.By("Gathering control plane manifests")
 	out, stderr, err := h.LinkerdRun(exec...)
-	gomega.Expect(err).Should(gomega.BeNil(), stderr)
+	ExpectNil(err, "`linkerd install` command failed: %s\n%s", out, stderr)
+	args = []string{"delete", "--ignore-not-found", "-f", "-"}
 
-	args = []string{"delete", "-f", "-"}
-
-	ginkgo.By("Deleting resources from the cluster")
 	out, err = h.Kubectl(out, args...)
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete resources: %s\n%s", Err(err), out))
 
@@ -159,13 +156,12 @@ func UninstallLinkerdControlPlane(h *testutil.TestHelper) {
 }
 
 func testResourcesPostInstall(namespace string, services []string, deploys map[string]testutil.DeploySpec, h *testutil.TestHelper) {
-	ginkgo.By(fmt.Sprintf("Checking resources in namespace %s", namespace))
 	err := h.CheckIfNamespaceExists(namespace)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not find namespace %s", namespace))
+	ExpectNil(err, "could not find namespace %s", namespace)
 
 	for _, svc := range services {
 		err = h.CheckService(namespace, svc)
-		gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("error validating service %s: %s", svc, Err(err)))
+		ExpectNil(err, "error validating service %s: %s", svc, Err(err))
 	}
 
 	for deploy, spec := range deploys {
@@ -177,7 +173,7 @@ func testResourcesPostInstall(namespace string, services []string, deploys map[s
 		}
 
 		err := h.CheckDeployment(namespace, deploy, spec.Replicas)
-		gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("CheckDeployment timed-out for deploy/%s: %s", deploy, Err(err)))
+		ExpectNil(err, "CheckDeploement timed-out for deploy/%s: %s", deploy, Err(err))
 
 	}
 }
@@ -217,37 +213,35 @@ func checkSampleAppState() {
 		}
 
 		err := h.CheckDeployment(emojivotoNs, deploy, 1)
-		gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to validate deploy/%s: %s", deploy, Err(err)))
+		ExpectNil(err, "failed to validate deploy/%s: %s", deploy, Err(err))
 	}
 
 	err := testutil.ExerciseTestAppEndpoint("/api/list", emojivotoNs, h)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to exercise emojivoto endpoint: %s", Err(err)))
+	ExpectNil(err, "failed to exercise emojivoto endpoint: %s", Err(err))
 }
 
 // TestEmojivotoApp installs and checks if emojivoto app is installed
 // called of the function must have `testdata/emojivoto.yml`
 func TestEmojivotoApp() {
-	ginkgo.By("Installing emojivoto")
 	h, _ := GetHelperAndConfig()
 	resources, err := testutil.ReadFile("testdata/emojivoto.yml")
-	gomega.Expect(err).Should(gomega.BeNil(), Err(err))
+	ExpectNil(err, "failed to read [emojivoto.yml]: %s", Err(err))
 
-	_, err = h.KubectlApply(resources, emojivotoNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not apply emojivoto manifests to your cluster: %s", Err(err)))
+	out, err := h.KubectlApply(resources, emojivotoNs)
+	ExpectNil(err, "`kubectl apply` commadn failed: %s\n%s", out, Err(err))
 	checkSampleAppState()
 }
 
 //TestEmojivotoInject installs and checks if emojivoto app is installed
 // called of the function must have `testdata/emojivoto.yml`
 func TestEmojivotoInject() {
-	ginkgo.By("Injecting emojivoto")
 	h, _ := GetHelperAndConfig()
 
 	out, err := h.Kubectl("", "get", "deploy", "-n", emojivotoNs, "-o", "yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to get manifests: %s", Err(err)))
+	ExpectNil(err, "`kubectl get` command failed: %s\n%s", out, Err(err))
 
 	out, stderr, err := h.PipeToLinkerdRun(out, "inject", "-")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject: %s", stderr))
+	ExpectNil(err, "`linkerd inject` command failed: %s\n%s", out, stderr)
 
 	out, err = h.KubectlApply(out, emojivotoNs)
 	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected resources: %s\n%s", Err(err), out))
@@ -261,11 +255,10 @@ func TestEmojivotoInject() {
 
 // TestEmojivotoUninstall tests if emojivoto can be successfull uninstalled
 func TestEmojivotoUninstall() {
-	ginkgo.By("Uninstalling emojivoto")
 	h, _ := GetHelperAndConfig()
 
-	_, err := h.Kubectl("", "delete", "ns", emojivotoNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("could not delete namespace %s: %s", emojivotoNs, Err(err)))
+	out, err := h.Kubectl("", "delete", "ns", emojivotoNs)
+	ExpectNil(err, "`kubectl delete ns` command failed %s\n%s", out, Err(err))
 }
 
 // CheckProxyContainer gets the pods from a deployment, and checks if the proxy container is present
