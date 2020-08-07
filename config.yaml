@@ -27,7 +27,7 @@ testCase:
         uninstall: true
         upgradeFromVersion: stable-2.7.1
     inject:
-        skip: true
+        skip: false
         clean: true
     tap:
         skip: false
@@ -39,4 +39,6 @@ testCase:
                 - name: nginx
                   clean: true
                 - name: ambassador
+                  clean: true
+                - name: traefik
                   clean: true
