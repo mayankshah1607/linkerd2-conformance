@@ -7,31 +7,33 @@ import (
 	"time"
 
 	"github.com/linkerd/linkerd2-conformance/utils"
-	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
 
-func pingEmojivoto(ip string) error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s", ip), nil)
+func pingIP(ip string) error {
+	req, err := http.NewRequest("GET", ip, nil)
 	if err != nil {
 		return err
+
 	}
 
 	req.Host = "example.com"
 
 	client := http.Client{
-		Timeout: 3 * time.Minute,
+		Timeout: 15 * time.Minute,
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
 		return err
+
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		return fmt.Errorf("did not recieve status code 200. Recieved %d", res.StatusCode)
+
 	}
 	return nil
 
@@ -58,50 +60,77 @@ func getExternalIP(svc, ns string) (string, error) {
 	return strings.Trim(ip, "'"), nil
 }
 
-func testNginx() {
+func testIngress(tc testCase) {
+	// install sample application
+	utils.TestEmojivotoApp()
+	utils.TestEmojivotoInject()
+
 	h, _ := utils.GetHelperAndConfig()
-	ginkgo.By("Creating ingress-nginx controller")
-	_, err := h.Kubectl("", "apply", "-f", "testdata/ingress/controllers/nginx.yaml")
 
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create controller: %s", utils.Err(err)))
+	// install and inject controller
+	for _, url := range tc.controllerURL {
+		out, err := h.Kubectl("",
+			"apply",
+			"-f", url)
+		gomega.Expect(err).Should(gomega.BeNil(),
+			fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
+	}
 
-	err = h.CheckPods(utils.NginxNs, utils.NginxController, 1)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
+	err := h.CheckPods(tc.namespace, tc.controllerDeployName, 1)
 
-	ginkgo.By("Injecting linkerd into the ingress controller pods")
-	out, err := h.Kubectl("", "get", "-n", utils.NginxNs, "deploy", utils.NginxController, "-o", "yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to get YAML manifest for deploy/%s: %s", utils.NginxController, utils.Err(err)))
+	out, err := h.Kubectl("",
+		"get", "-n", tc.namespace,
+		"deploy", tc.controllerDeployName,
+		"-o", "yaml")
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`kubectl get deploy` command failed: %s\n%s", out, utils.Err(err)))
 
 	out, stderr, err := h.PipeToLinkerdRun(out, "inject", "-")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject: %s", stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`linkerd inject` command failed: %s\n%s", out, stderr))
 
-	_, err = h.KubectlApply(out, utils.NginxNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to apply injected manifests: %s", utils.Err(err)))
+	out, err = h.KubectlApply(out, tc.namespace)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 
-	err = h.CheckPods(utils.NginxNs, utils.NginxController, 1)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
+	err = h.CheckPods(tc.namespace, tc.controllerDeployName, 2)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
 
-	ginkgo.By("Verifying if ingress controller pods have been injected")
-	// Wait upto 3mins for proxy container to show up
-	err = utils.CheckProxyContainer(utils.NginxController, utils.NginxNs)
-	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
+	err = utils.CheckProxyContainer(tc.controllerDeployName, tc.namespace)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("could not finx proxy container in controller deployment: %s", utils.Err(err)))
 
-	ginkgo.By("Applying ingress resource")
-	_, err = h.Kubectl("", "apply", "-f", "testdata/ingress/resources/nginx.yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create ingress resource: %s", utils.Err(err)))
+	// install ingress resource
+	out, err = h.Kubectl("", "apply", "-f", tc.resourcePath)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 
-	ginkgo.By("Checking if emojivoto is reachable")
-	ip, err := getExternalIP(utils.NginxController, utils.NginxNs)
-	gomega.Expect(err).Should(gomega.BeNil(), utils.Err(err))
+	extIP, err := getExternalIP(tc.lbSvcName, tc.namespace)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to fetch external IP: %s", utils.Err(err)))
 
 	err = h.RetryFor(3*time.Minute, func() error {
-		return pingEmojivoto(strings.Trim(ip, "'"))
+		return pingIP(fmt.Sprintf("http://%s", strings.Trim(extIP, "'")))
 	})
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
+}
 
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
+func testClean(tc testCase) {
+	// uninstall emojivoto
+	utils.TestEmojivotoUninstall()
+	h, _ := utils.GetHelperAndConfig()
 
-	ginkgo.By(fmt.Sprintf("Removing ingress controller in namespace %s", utils.NginxNs))
-	_, err = h.Kubectl("", "delete", "ns", utils.NginxNs)
+	for _, url := range tc.controllerURL {
+		out, err := h.Kubectl("", "delete",
+			"--ignore-not-found",
+			"-n", tc.namespace,
+			"-f", url)
+		gomega.Expect(err).Should(gomega.BeNil(),
+			fmt.Sprintf("`kubectl delete` command failed: %s\n%s",
+				out, utils.Err(err)))
 
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete resources in namespace %s", utils.NginxNs))
+	}
+
 }

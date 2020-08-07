@@ -27,7 +27,7 @@ testCase:
         uninstall: true
         upgradeFromVersion: stable-2.7.1
     inject:
-        skip: false
+        skip: true
         clean: true
     tap:
         skip: false
@@ -36,4 +36,7 @@ testCase:
         skip: false
         config:
             controllers:
-                - nginx
+                - name: nginx
+                  clean: true
+                - name: ambassador
+                  clean: true

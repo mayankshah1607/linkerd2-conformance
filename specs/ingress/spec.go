@@ -1,9 +1,58 @@
 package ingress
 
 import (
+	"fmt"
+
 	"github.com/linkerd/linkerd2-conformance/utils"
 	"github.com/onsi/ginkgo"
 )
+
+type testCase struct {
+	ingressName          string
+	controllerURL        []string
+	controllerDeployName string
+	lbSvcName            string
+	clusterIPSvcName     string
+	namespace            string
+	resourcePath         string
+}
+
+const (
+	nginxURL         = "https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml"
+	traefikURL       = "testdata/ingress/controllers/traefik.yaml"
+	ambassadorCRDURL = "https://www.getambassador.io/yaml/aes-crds.yaml"
+	ambassadorURL    = "https://www.getambassador.io/yaml/aes.yaml"
+)
+
+var testCases = []testCase{
+	{
+		ingressName:          "nginx",
+		controllerURL:        []string{nginxURL},
+		resourcePath:         "testdata/ingress/resources/nginx.yaml",
+		controllerDeployName: "ingress-nginx-controller",
+		lbSvcName:            "ingress-nginx-controller",
+		clusterIPSvcName:     "ingress-nginx-controller-admission",
+		namespace:            "ingress-nginx",
+	},
+	{
+		ingressName:          "traefik",
+		controllerURL:        []string{traefikURL},
+		resourcePath:         "testdata/ingress/resources/traefik.yaml",
+		controllerDeployName: "traefik-ingress-controller",
+		lbSvcName:            "traefik-ingress-controller",
+		clusterIPSvcName:     "traefik-ingress-controller-cluster-ip",
+		namespace:            "kube-system",
+	},
+	{
+		ingressName:          "ambassador",
+		controllerURL:        []string{ambassadorCRDURL, ambassadorURL},
+		resourcePath:         "testdata/ingress/resources/ambassador.yaml",
+		controllerDeployName: "ambassador",
+		lbSvcName:            "ambassador",
+		clusterIPSvcName:     "ambassador-admin",
+		namespace:            "ambassador",
+	},
+}
 
 // RunIngressTests runs the specs for ingress
 func RunIngressTests() bool {
@@ -12,15 +61,21 @@ func RunIngressTests() bool {
 
 		_ = utils.ShouldTestSkip(c.SkipIngress(), "Skipping ingress tests")
 
-		ginkgo.It("can install and inject emojivoto app", func() {
-			utils.TestEmojivotoApp()
-			utils.TestEmojivotoInject()
-		})
+		for _, tc := range testCases {
+			tc := tc //pin
+			if c.ShouldTestIngressOfType(tc.ingressName) {
+				ginkgo.Context(fmt.Sprintf("%s:", tc.ingressName), func() {
+					ginkgo.It(fmt.Sprintf("should work with Linkerd"), func() {
+						testIngress(tc)
+					})
 
-		if c.ShouldTestIngressOfType(utils.Nginx) {
-			ginkgo.It("can work with nginx ingress controller", testNginx)
+					if c.ShouldCleanIngressInstallation(tc.ingressName) {
+						ginkgo.It("should delete resources created for testing", func() {
+							testClean(tc)
+						})
+					}
+				})
+			}
 		}
-
-		ginkgo.It("can uninstall emojivoto app", utils.TestEmojivotoUninstall)
 	})
 }

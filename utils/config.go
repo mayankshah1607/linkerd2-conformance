@@ -40,9 +40,15 @@ type ControlPlane struct {
 	ControlPlaneConfig `yaml:"config,omitempty"`
 }
 
+// IngressControllerConfig holds controller specific configuration
+type IngressControllerConfig struct {
+	Name  string `yaml:"name"`
+	Clean bool   `yaml:"clean"`
+}
+
 // IngressConfig holds the list of ingress controllers
 type IngressConfig struct {
-	Controllers []string `yaml:"controllers"`
+	Controllers []IngressControllerConfig `yaml:"controllers"`
 }
 
 // Ingress holds the configuration for ingress test
@@ -262,9 +268,30 @@ func (options *ConformanceTestOptions) SkipIngress() bool {
 	return options.TestCase.Ingress.Skip
 }
 
+// GetIngressControllerConfig returns a slice of IngressControllerConfig
+func (options *ConformanceTestOptions) GetIngressControllerConfig() *[]IngressControllerConfig {
+	return &options.TestCase.Ingress.IngressConfig.Controllers
+}
+
 // ShouldTestIngressOfType checks if a given type of ingress must be tested
 func (options *ConformanceTestOptions) ShouldTestIngressOfType(t string) bool {
-	return indexOf(options.TestCase.Ingress.IngressConfig.Controllers, t) > -1
+	for _, controllerConfig := range *options.GetIngressControllerConfig() {
+		if controllerConfig.Name == t {
+			return true
+		}
+	}
+	return false
+}
+
+// ShouldCleanIngressInstallation checks if a particular ingress installation
+// must be deleted post installation
+func (options *ConformanceTestOptions) ShouldCleanIngressInstallation(t string) bool {
+	for _, controllerConfig := range *options.GetIngressControllerConfig() {
+		if controllerConfig.Name == t && controllerConfig.Clean {
+			return true
+		}
+	}
+	return false
 }
 
 // SkipTap checks if tap tests should be skipped

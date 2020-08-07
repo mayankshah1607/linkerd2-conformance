@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-ambassador
+  namespace: emojivoto
+  annotations:
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v1
+      kind: Mapping
+      name: web-ambassador-mapping
+      service: http://web-svc.emojivoto.svc.cluster.local:80
+      host: example.com
+      prefix: /
+      add_linkerd_headers: true
+spec:
+  selector:
+    app: web-svc
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
