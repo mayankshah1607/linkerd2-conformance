@@ -3,24 +3,26 @@ package ingress
 import (
 	"fmt"
 	"net/http"
-	"strings"
+	"os/exec"
 	"time"
 
 	"github.com/linkerd/linkerd2-conformance/utils"
 	"github.com/onsi/gomega"
 )
 
-func pingIP(ip string) error {
-	req, err := http.NewRequest("GET", ip, nil)
+func pingIngress() error {
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
 	if err != nil {
 		return err
 
 	}
 
+	req.Close = true
 	req.Host = "example.com"
 
 	client := http.Client{
-		Timeout: 15 * time.Minute,
+		Timeout:   15 * time.Minute,
+		Transport: &http.Transport{MaxConnsPerHost: 20},
 	}
 
 	res, err := client.Do(req)
@@ -39,25 +41,24 @@ func pingIP(ip string) error {
 
 }
 
-func getExternalIP(svc, ns string) (string, error) {
-	h, _ := utils.GetHelperAndConfig()
-	var ip string
-	var err error
+func beginPortForward(ns, obj string) (*exec.Cmd, error) {
+	cmd := exec.Command("kubectl",
+		"-n", ns,
+		"port-forward",
+		obj,
+		"8080:80")
 
-	err = h.RetryFor(time.Minute*5, func() error {
-		ip, err = h.Kubectl("", "get", "svc", "-n", ns, svc, "-o", "jsonpath='{.status.loadBalancer.ingress[0].ip}'")
-		if err != nil {
-			return fmt.Errorf("failed to fetch external IP: %s", err.Error())
-		}
-		if strings.Trim(ip, "'") == "" {
-			return fmt.Errorf("IP address is empty")
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
+	if err := cmd.Start(); err != nil {
+		return nil, err
 	}
-	return strings.Trim(ip, "'"), nil
+	return cmd, nil
+}
+
+func stopPortforward(cmd *exec.Cmd) error {
+	if err := cmd.Process.Kill(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func testIngress(tc testCase) {
@@ -76,7 +77,7 @@ func testIngress(tc testCase) {
 			fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 	}
 
-	err := h.CheckPods(tc.namespace, tc.controllerDeployName, 1)
+	err := h.CheckDeployment(tc.namespace, tc.controllerDeployName, 1)
 
 	out, err := h.Kubectl("",
 		"get", "-n", tc.namespace,
@@ -93,7 +94,7 @@ func testIngress(tc testCase) {
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 
-	err = h.CheckPods(tc.namespace, tc.controllerDeployName, 2)
+	err = h.CheckDeployment(tc.namespace, tc.controllerDeployName, 1)
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("failed to verify controller pods: %s", utils.Err(err)))
 
@@ -106,12 +107,22 @@ func testIngress(tc testCase) {
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 
-	extIP, err := getExternalIP(tc.lbSvcName, tc.namespace)
+	var cmd *exec.Cmd
+	if tc.ingressName != "ambassador" {
+		cmd, err = beginPortForward(tc.namespace, "deploy/"+tc.controllerDeployName)
+	} else {
+		cmd, err = beginPortForward("emojivoto", "svc/web-ambassador")
+	}
+
+	defer func() {
+		_ = stopPortforward(cmd)
+	}()
+
 	gomega.Expect(err).Should(gomega.BeNil(),
-		fmt.Sprintf("failed to fetch external IP: %s", utils.Err(err)))
+		fmt.Sprintf("`kubectl port-forward` command failed: %s", utils.Err(err)))
 
 	err = h.RetryFor(3*time.Minute, func() error {
-		return pingIP(fmt.Sprintf("http://%s", strings.Trim(extIP, "'")))
+		return pingIngress()
 	})
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
