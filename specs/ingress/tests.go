@@ -10,8 +10,8 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func httpGet() error {
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
+func httpGet(url string) error {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 
@@ -121,8 +121,9 @@ func testIngress(tc testCase) {
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("`kubectl port-forward` command failed: %s", utils.Err(err)))
 
+	url := "http://127.0.0.1:8080"
 	err = h.RetryFor(3*time.Minute, func() error {
-		return httpGet()
+		return httpGet(url)
 	})
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
