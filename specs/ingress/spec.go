@@ -11,7 +11,7 @@ type testCase struct {
 	ingressName          string
 	controllerURL        []string
 	controllerDeployName string
-	SvcName              string
+	svcName              string
 	namespace            string
 	resourcePath         string
 }
@@ -29,7 +29,7 @@ var testCases = []testCase{
 		controllerURL:        []string{nginxURL},
 		resourcePath:         "testdata/ingress/resources/nginx.yaml",
 		controllerDeployName: "ingress-nginx-controller",
-		SvcName:              "ingress-nginx-controller",
+		svcName:              "ingress-nginx-controller",
 		namespace:            "ingress-nginx",
 	},
 	{
@@ -38,7 +38,7 @@ var testCases = []testCase{
 		resourcePath:         "testdata/ingress/resources/traefik.yaml",
 		controllerDeployName: "traefik-ingress-controller",
 		namespace:            "kube-system",
-		SvcName:              "traefik-ingress-controller",
+		svcName:              "traefik-ingress-controller",
 	},
 	{
 		ingressName:          "ambassador",
@@ -46,7 +46,7 @@ var testCases = []testCase{
 		resourcePath:         "testdata/ingress/resources/ambassador.yaml",
 		controllerDeployName: "ambassador",
 		namespace:            "ambassador",
-		SvcName:              "ambassador",
+		svcName:              "ambassador",
 	},
 }
 

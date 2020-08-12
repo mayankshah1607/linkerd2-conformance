@@ -10,7 +10,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func pingIngress() error {
+func httpGet() error {
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func testIngress(tc testCase) {
 
 	var cmd *exec.Cmd
 	if tc.ingressName != "ambassador" {
-		cmd, err = beginPortForward(tc.namespace, "deploy/"+tc.controllerDeployName)
+		cmd, err = beginPortForward(tc.namespace, "svc/"+tc.svcName)
 	} else {
 		cmd, err = beginPortForward("emojivoto", "svc/web-ambassador")
 	}
@@ -122,7 +122,7 @@ func testIngress(tc testCase) {
 		fmt.Sprintf("`kubectl port-forward` command failed: %s", utils.Err(err)))
 
 	err = h.RetryFor(3*time.Minute, func() error {
-		return pingIngress()
+		return httpGet()
 	})
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("failed to reach emojivoto: %s", utils.Err(err)))
