@@ -62,7 +62,6 @@ func RunCheck(h *testutil.TestHelper, pre bool) {
 
 	if pre {
 		cmd = append(cmd, "--pre")
-	} else {
 	}
 
 	out, stderr, err := h.LinkerdRun(cmd...)
