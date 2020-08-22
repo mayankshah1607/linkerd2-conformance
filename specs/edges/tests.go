@@ -46,7 +46,9 @@ func testDeployTerminus() {
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("CheckDeployment timed-out: %s", utils.Err(err)))
 
-	terminuspodIP, err = h.Kubectl("", "-n", testNs, "get", "pod", "-ojonpath=\"{.items[*].status.podIP}\"")
+	terminuspodIP, err = h.Kubectl("", "-n", testNs,
+		"get", "pod",
+		"-ojsonpath=\"{.items[*].status.podIP}\"")
 	gomega.Expect(err).Should(gomega.BeNil(),
 		"failed to get pod ip: `kubectl get pod command failed` - %s", utils.Err(err))
 
@@ -118,5 +120,5 @@ func testClean() {
 	h, _ := utils.GetHelperAndConfig()
 	out, err := h.Kubectl("", "delete", "ns", testNs)
 	gomega.Expect(err).Should(gomega.BeNil(),
-		fmt.Sprintf("`kubectl delete ns` command failed"))
+		fmt.Sprintf("`kubectl delete ns` command failed: %s\n%s", out, err))
 }
