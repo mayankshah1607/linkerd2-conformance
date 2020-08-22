@@ -62,12 +62,18 @@ type Tap struct {
 	Clean bool `yaml:"clean,omitempty"`
 }
 
+// Edges holds the configuration for `linkerd edges` tests
+type Edges struct {
+	Skip bool `yaml:"skip,omitempty"`
+}
+
 // TestCase holds configuration of the various test cases
 type TestCase struct {
 	Lifecycle `yaml:"lifecycle,omitempty"`
 	Inject    `yaml:"inject"`
 	Ingress   `yaml:"ingress"`
 	Tap       `yaml:"tap"`
+	Edges     `yaml:"edges"`
 }
 
 // ConformanceTestOptions holds the values fed from the test config file
