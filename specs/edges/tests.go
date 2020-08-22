@@ -113,3 +113,10 @@ func testEdges() {
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("failed to verify edges:\n%s", err))
 }
+
+func testClean() {
+	h, _ := utils.GetHelperAndConfig()
+	out, err := h.Kubectl("", "delete", "ns", testNs)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`kubectl delete ns` command failed"))
+}
