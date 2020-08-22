@@ -5,6 +5,7 @@ import (
 	"github.com/onsi/ginkgo"
 )
 
+// RunEdgesTests runs the specs for `linkerd edges`
 func RunEdgesTests() bool {
 	return ginkgo.Describe("`linkerd edges`: ", func() {
 		_, c := utils.GetHelperAndConfig()
