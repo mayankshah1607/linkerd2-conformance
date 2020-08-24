@@ -25,11 +25,7 @@ testCase:
         skip: false
         reinstall: false 
         uninstall: true
-<<<<<<< HEAD
         upgradeFromVersion: stable-2.7.1
-=======
-        upgradeFromVersion: stable-2.7.0
->>>>>>> Revert config.yaml
     inject:
         skip: false
         clean: true
