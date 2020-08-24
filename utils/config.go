@@ -57,6 +57,12 @@ type Ingress struct {
 	IngressConfig `yaml:"config,omitempty"`
 }
 
+// SerServiceProfiles holds the configuration for ServiceServiceProfiles tests
+type ServiceProfiles struct {
+	Skip  bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"skip,omitempty"`
+}
+
 type Tap struct {
 	Skip  bool `yaml:"skip,omitempty"`
 	Clean bool `yaml:"clean,omitempty"`
@@ -70,11 +76,12 @@ type Stat struct {
 
 // TestCase holds configuration of the various test cases
 type TestCase struct {
-	Lifecycle `yaml:"lifecycle,omitempty"`
-	Inject    `yaml:"inject"`
-	Ingress   `yaml:"ingress"`
-	Tap       `yaml:"tap"`
-	Stat      `yaml:"stat"`
+	Lifecycle       `yaml:"lifecycle,omitempty"`
+	Inject          `yaml:"inject"`
+	Ingress         `yaml:"ingress"`
+	Tap             `yaml:"tap"`
+	Stat            `yaml:"stat"`
+	ServiceProfiles `yaml:"serviceProfiles"`
 }
 
 // ConformanceTestOptions holds the values fed from the test config file
@@ -331,12 +338,12 @@ func (options *ConformanceTestOptions) CleanTap() bool {
 	return options.TestCase.Tap.Clean
 }
 
-// SkipStat checks if `stat` test must be skipped
-func (options *ConformanceTestOptions) SkipStat() bool {
-	return options.TestCase.Stat.Skip
+// SkipSP checks if ServiceProfiles test must be skipped
+func (options *ConformanceTestOptions) SkipSP() bool {
+	return options.TestCase.ServiceProfiles.Skip
 }
 
-// CleanStat checks if stat test resources must be deleted
-func (options *ConformanceTestOptions) CleanStat() bool {
-	return options.TestCase.Stat.Clean
+// CleanSP checks if SP test resources must be deleted
+func (options *ConformanceTestOptions) CleanSP() bool {
+	return options.TestCase.ServiceProfiles.Clean
 }

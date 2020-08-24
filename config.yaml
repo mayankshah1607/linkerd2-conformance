@@ -35,6 +35,9 @@ testCase:
     stat:
         skip: false
         clean: true
+    serviceProfiles:
+        skip: false
+        clean: true 
     ingress:
         skip: false
         config:
