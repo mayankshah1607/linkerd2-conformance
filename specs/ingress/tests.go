@@ -78,6 +78,8 @@ func testIngress(tc testCase) {
 	}
 
 	err := h.CheckDeployment(tc.namespace, tc.controllerDeployName, 1)
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("CheckDeployment timed-out: %s", utils.Err(err)))
 
 	out, err := h.Kubectl("",
 		"get", "-n", tc.namespace,

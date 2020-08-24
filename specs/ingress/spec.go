@@ -61,7 +61,7 @@ func RunIngressTests() bool {
 			tc := tc //pin
 			if c.ShouldTestIngressOfType(tc.ingressName) {
 				ginkgo.Context(fmt.Sprintf("%s:", tc.ingressName), func() {
-					ginkgo.It(fmt.Sprintf("should work with Linkerd"), func() {
+					ginkgo.It("should work with Linkerd", func() {
 						testIngress(tc)
 					})
 

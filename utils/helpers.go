@@ -125,15 +125,6 @@ func InstallLinkerdBinary(linkerd, version string, force bool, verbose bool) err
 	return nil
 }
 
-func indexOf(arr []string, item string) int {
-	for i, v := range arr {
-		if v == item {
-			return i
-		}
-	}
-	return -1
-}
-
 // Err returns err.Error() string
 // if err is not nil
 // This helper is meant to be used with
