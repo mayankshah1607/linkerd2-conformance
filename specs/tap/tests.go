@@ -57,14 +57,14 @@ var (
 func testTapAppDeploy() {
 	h, _ := utils.GetHelperAndConfig()
 	out, stderr, err := h.LinkerdRun("inject", "--manual", "testdata/tap/tap_application.yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), "`inject` command failed: %s", stderr)
+	gomega.Expect(err).Should(gomega.BeNil(), "`inject` command failed: %s\n%s", out, stderr)
 
 	prefixedNs = h.GetTestNamespace("tap-test")
 	err = h.CreateDataPlaneNamespaceIfNotExists(prefixedNs, nil)
 	gomega.Expect(err).Should(gomega.BeNil(), "failed to create namespace \"%s\": %s", prefixedNs, utils.Err(err))
 
 	out, err = h.KubectlApply(out, prefixedNs)
-	gomega.Expect(err).Should(gomega.BeNil(), "`kubectl apply` command failed: %s", utils.Err(err))
+	gomega.Expect(err).Should(gomega.BeNil(), "`kubectl apply` command failed: %s\n%s", out, utils.Err(err))
 
 	for _, deploy := range []string{"t1", "t2", "t3", "gateway"} {
 		if err := h.CheckPods(prefixedNs, deploy, 1); err != nil {
@@ -150,8 +150,8 @@ func testDeleteTapApp() {
 	h, _ := utils.GetHelperAndConfig()
 
 	out, err := h.Kubectl("", "delete", "-n", prefixedNs, "-f", "testdata/tap/tap_application.yaml")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete application: %s", out))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete application: %s\n%s", out, err))
 
 	out, err = h.Kubectl("", "delete", "ns", prefixedNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete namespace \"%s\": %s", prefixedNs, out))
+	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to delete namespace \"%s\": %s\n%s", prefixedNs, out, err))
 }
