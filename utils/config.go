@@ -171,6 +171,26 @@ func (options *ConformanceTestOptions) parse() error {
 	if options.Lifecycle.UpgradeFromVersion != "" && options.SkipLifecycle() {
 		return errors.New("cannot skip lifecycle tests when 'install.upgradeFromVersion' is set - either enable install tests, or omit 'install.upgradeFromVersion'")
 	}
+
+	if !options.Ingress.Skip && len(options.Ingress.Controllers) == 0 {
+		fmt.Println("No ingress controllers specified. Testing nginx, traefik and ambassador")
+		defaultControllerConfig := []IngressControllerConfig{
+			{
+				Name:  "nginx",
+				Clean: true,
+			},
+			{
+				Name:  "traefik",
+				Clean: true,
+			},
+			{
+				Name:  "ambassador",
+				Clean: true,
+			},
+		}
+		options.Ingress.Controllers = defaultControllerConfig
+	}
+
 	return nil
 }
 
