@@ -77,7 +77,17 @@ func testIngress(tc testCase) {
 			fmt.Sprintf("`kubectl apply` command failed: %s\n%s", out, utils.Err(err)))
 	}
 
-	err := h.CheckDeployment(tc.namespace, tc.controllerDeployName, 1)
+	// CheckDeployment retries only for 30s
+	// This wrapper will ensure that CheckDeployment
+	// is tried for longer
+	err := h.RetryFor(5*time.Minute, func() error {
+		err := h.CheckDeployment(tc.namespace, tc.controllerDeployName, 1)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
 	gomega.Expect(err).Should(gomega.BeNil(),
 		fmt.Sprintf("CheckDeployment timed-out: %s", utils.Err(err)))
 
