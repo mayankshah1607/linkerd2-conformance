@@ -59,7 +59,7 @@ func testDeploySlowCooker() {
 	h, _ := utils.GetHelperAndConfig()
 	b, err := ioutil.ReadFile("testdata/edges/slow-cooker.yaml")
 	gomega.Expect(err).Should(gomega.BeNil(),
-		fmt.Sprintf("error reading file slow-cooker.yaml"))
+		"error reading file slow-cooker.yaml")
 
 	slowcooker := string(b)
 	slowcooker = strings.ReplaceAll(slowcooker, "___TERMINUS_POD_IP___", terminuspodIP)
