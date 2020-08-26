@@ -62,12 +62,19 @@ type Tap struct {
 	Clean bool `yaml:"clean,omitempty"`
 }
 
+// Stat holds the configuration for stat test
+type Stat struct {
+	Skip  bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"clean,omitempty"`
+}
+
 // TestCase holds configuration of the various test cases
 type TestCase struct {
 	Lifecycle `yaml:"lifecycle,omitempty"`
 	Inject    `yaml:"inject"`
 	Ingress   `yaml:"ingress"`
 	Tap       `yaml:"tap"`
+	Stat      `yaml:"stat"`
 }
 
 // ConformanceTestOptions holds the values fed from the test config file
@@ -322,4 +329,14 @@ func (options *ConformanceTestOptions) SkipTap() bool {
 // CleanTap checks if tap resources must be deleted
 func (options *ConformanceTestOptions) CleanTap() bool {
 	return options.TestCase.Tap.Clean
+}
+
+// SkipStat checks if `stat` test must be skipped
+func (options *ConformanceTestOptions) SkipStat() bool {
+	return options.TestCase.Stat.Skip
+}
+
+// CleanStat checks if stat test resources must be deleted
+func (options *ConformanceTestOptions) CleanStat() bool {
+	return options.TestCase.Stat.Clean
 }

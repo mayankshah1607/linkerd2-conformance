@@ -10,6 +10,9 @@ import (
 
 func RunStatTests() bool {
 	return ginkgo.Describe("stat:", func() {
+		_, c := utils.GetHelperAndConfig()
+		_ = utils.ShouldTestSkip(c.SkipStat(), "Skipping tap tests")
+
 		ginkgo.It("deploying sample application [emojivoto]", func() {
 			utils.TestEmojivotoApp()
 			utils.TestEmojivotoInject()
@@ -24,8 +27,10 @@ func RunStatTests() bool {
 			}
 		})
 
-		ginkgo.It("uninstalling sample application [emojivoto]", func() {
-			utils.TestEmojivotoUninstall()
-		})
+		if c.CleanStat() {
+			ginkgo.It("uninstalling sample application [emojivoto]", func() {
+				utils.TestEmojivotoUninstall()
+			})
+		}
 	})
 }
