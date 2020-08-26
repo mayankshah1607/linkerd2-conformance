@@ -45,3 +45,6 @@ testCase:
                   clean: true
                 - name: traefik
                   clean: true
+    routes:
+        skip: false
+        clean: true
