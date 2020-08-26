@@ -17,14 +17,17 @@ func testInstallSmokeTest() {
 
 	cmd := []string{"inject", "testdata/routes/smoke_test.yaml"}
 	out, stderr, err := h.LinkerdRun(cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to inject manifests: %s\n%s", utils.Err(err), stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to inject manifests: %s\n%s", utils.Err(err), stderr))
 
 	prefixedNs := h.GetTestNamespace(ns)
 	err = h.CreateDataPlaneNamespaceIfNotExists(prefixedNs, map[string]string{})
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create namespace: %s", utils.Err(err)))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to create namespace: %s", utils.Err(err)))
 
 	out, err = h.KubectlApply(out, prefixedNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to create resources %s\n%s", utils.Err(err), out))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to create resources %s\n%s", utils.Err(err), out))
 
 	for _, deploy := range []string{"smoke-test-terminus", "smoke-test-gateway"} {
 		if err := h.CheckPods(prefixedNs, deploy, 1); err != nil {
@@ -35,12 +38,15 @@ func testInstallSmokeTest() {
 	}
 
 	url, err := h.URLFor(prefixedNs, "smoke-test-gateway", 8080)
-	gomega.Expect(err).Should(gomega.BeNil(), "failed to get URL for [smoke-test-gateway]")
+	gomega.Expect(err).Should(gomega.BeNil(),
+		"failed to get URL for [smoke-test-gateway]")
 	output, err := h.HTTPGetURL(url)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to reach smoke-test-gateway: %s\n%s", utils.Err(err), output))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to reach smoke-test-gateway: %s\n%s", utils.Err(err), output))
 
 	expectedStringPayload := "\"payload\":\"BANANA\""
-	gomega.Expect(output).Should(gomega.ContainSubstring(expectedStringPayload), fmt.Sprintf("output does not contain expected substring"))
+	gomega.Expect(output).Should(gomega.ContainSubstring(expectedStringPayload),
+		"output does not contain expected substring")
 }
 
 func testInstallSPSmokeTest() {
@@ -48,14 +54,17 @@ func testInstallSPSmokeTest() {
 	prefixedNs := h.GetTestNamespace(ns)
 
 	bbProto, err := testutil.ReadFile("testdata/routes/api.proto")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to read proto file: %s", utils.Err(err)))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to read proto file: %s", utils.Err(err)))
 
 	cmd := []string{"profile", "-n", prefixedNs, "--proto", "-", "smoke-test-terminus-svc"}
 	bbSP, stderr, err := h.PipeToLinkerdRun(bbProto, cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to produce ServiceProfiles: %s\n%s", utils.Err(err), stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to produce ServiceProfiles: %s\n%s", utils.Err(err), stderr))
 
 	out, err := h.KubectlApply(bbSP, prefixedNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to install ServiceProfiles: %s\n%s", utils.Err(err), out))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to install ServiceProfiles: %s\n%s", utils.Err(err), out))
 }
 
 func testInstallSPContolPlane() {
@@ -64,10 +73,12 @@ func testInstallSPContolPlane() {
 	cmd := []string{"install-sp"}
 
 	out, stderr, err := h.LinkerdRun(cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to generate ServiceProfiles: %s\n%s", utils.Err(err), stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to generate ServiceProfiles: %s\n%s", utils.Err(err), stderr))
 
 	out, err = h.KubectlApply(out, h.GetLinkerdNamespace())
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to install ServiceProfiles: %s\n%s", utils.Err(err), out))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to install ServiceProfiles: %s\n%s", utils.Err(err), out))
 }
 
 func testRoutes() {
@@ -77,7 +88,8 @@ func testRoutes() {
 
 	cmd := []string{"routes", "--namespace", h.GetLinkerdNamespace(), "deploy"}
 	out, stderr, err := h.LinkerdRun(cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("`linkerd routes` command failed: %s\n%s", out, stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`linkerd routes` command failed: %s\n%s", out, stderr))
 
 	routeStrings := []struct {
 		s string
@@ -102,7 +114,8 @@ func testRoutes() {
 
 	for _, r := range routeStrings {
 		count := strings.Count(out, r.s)
-		gomega.Expect(count).Should(gomega.Equal(r.c), fmt.Sprintf("expected %d occurences of %s, got %d", r.c, r.s, count))
+		gomega.Expect(count).Should(gomega.Equal(r.c),
+			fmt.Sprintf("expected %d occurences of %s, got %d", r.c, r.s, count))
 	}
 
 	ginkgo.By("Testing smoke-test routes")
@@ -111,10 +124,12 @@ func testRoutes() {
 	golden := "routes/routes.smoke.golden"
 
 	out, stderr, err = h.LinkerdRun(cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("`linkerd routes` command failed: %s\n%s", out, stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`linkerd routes` command failed: %s\n%s", out, stderr))
 
 	err = h.ValidateOutput(out, golden)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to validate output: %s", utils.Err(err)))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to validate output: %s", utils.Err(err)))
 }
 
 func testUninstallSmokeTest() {
@@ -122,7 +137,8 @@ func testUninstallSmokeTest() {
 	prefixedNs := h.GetTestNamespace(ns)
 
 	out, err := h.Kubectl("", "delete", "ns", prefixedNs)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("`kubectl delete` command failed: %s\n%s", utils.Err(err), out))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("`kubectl delete` command failed: %s\n%s", utils.Err(err), out))
 
 }
 
@@ -132,8 +148,10 @@ func testUninstallControlPlaneServiceProfile() {
 	cmd := []string{"install-sp"}
 
 	out, stderr, err := h.LinkerdRun(cmd...)
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to generate ServiceProfiles: %s\n%s", utils.Err(err), stderr))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to generate ServiceProfiles: %s\n%s", utils.Err(err), stderr))
 
 	out, err = h.Kubectl(out, "-n", h.GetLinkerdNamespace(), "delete", "-f", "-")
-	gomega.Expect(err).Should(gomega.BeNil(), fmt.Sprintf("failed to remove ServiceProfiles: %s\n%s", utils.Err(err), out))
+	gomega.Expect(err).Should(gomega.BeNil(),
+		fmt.Sprintf("failed to remove ServiceProfiles: %s\n%s", utils.Err(err), out))
 }
