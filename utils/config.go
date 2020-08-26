@@ -64,9 +64,11 @@ type Tap struct {
 
 // Stat holds the configuration for stat test
 type Stat struct {
-	// Routes holds the configuration for `routes` tests
+	Skip  bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"clean,omitempty"`
 }
 
+// Routes holds the configuration for `routes` tests
 type Routes struct {
 	Skip  bool `yaml:"skip,omitempty"`
 	Clean bool `yaml:"clean,omitempty"`
