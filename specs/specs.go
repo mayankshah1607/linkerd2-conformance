@@ -43,6 +43,7 @@ func runPrimaryTests() bool {
 		_ = inject.RunInjectTests()
 		_ = tap.RunTapTests()
 		_ = ingress.RunIngressTests()
+		_ = stat.RunStatTests()
 
 		// a separate check for running uninstall must always occur at the end
 		if c.SingleControlPlane() && h.Uninstall() {
