@@ -60,7 +60,7 @@ type Ingress struct {
 // SerServiceProfiles holds the configuration for ServiceServiceProfiles tests
 type ServiceProfiles struct {
 	Skip  bool `yaml:"skip,omitempty"`
-	Clean bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"clean,omitempty"`
 }
 
 type Tap struct {
