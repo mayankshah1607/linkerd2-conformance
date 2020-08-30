@@ -330,7 +330,7 @@ func getRoutes(source, destination, namespace string, additionalArgs []string) (
 func testClean() {
 	h, _ := utils.GetHelperAndConfig()
 
-	out, err := h.Kubectl("get",
+	out, err := h.Kubectl("", "get",
 		"all", "-n", booksappNs,
 		"-o", "yaml")
 	gomega.Expect(err).Should(gomega.BeNil(),
