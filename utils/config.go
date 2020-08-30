@@ -347,3 +347,15 @@ func (options *ConformanceTestOptions) SkipSP() bool {
 func (options *ConformanceTestOptions) CleanSP() bool {
 	return options.TestCase.ServiceProfiles.Clean
 }
+
+// SkipStat checks if `stat` test must be skipped
+func (options *ConformanceTestOptions) SkipStat() bool {
+	return options.TestCase.Stat.Skip
+
+}
+
+// CleanStat checks if stat test resources must be deleted
+func (options *ConformanceTestOptions) CleanStat() bool {
+	return options.TestCase.Stat.Clean
+
+}
