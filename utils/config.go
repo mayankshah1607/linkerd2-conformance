@@ -62,7 +62,6 @@ type Tap struct {
 	Clean bool `yaml:"clean,omitempty"`
 }
 
-
 // Edges holds the configuration for `linkerd edges` tests
 type Edges struct {
 	Skip  bool `yaml:"skip,omitempty"`
@@ -338,7 +337,6 @@ func (options *ConformanceTestOptions) SkipTap() bool {
 func (options *ConformanceTestOptions) CleanTap() bool {
 	return options.TestCase.Tap.Clean
 }
-
 
 // SkipEdges returns the value of options.TestCase.Edges.Skip
 func (options *ConformanceTestOptions) SkipEdges() bool {
