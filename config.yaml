@@ -35,6 +35,10 @@ testCase:
     edges:
         skip: false
         clean: true
+    stat:
+
+        skip: false
+        clean: true
     ingress:
         skip: false
         config:

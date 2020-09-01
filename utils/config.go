@@ -62,8 +62,15 @@ type Tap struct {
 	Clean bool `yaml:"clean,omitempty"`
 }
 
+
 // Edges holds the configuration for `linkerd edges` tests
 type Edges struct {
+	Skip  bool `yaml:"skip,omitempty"`
+	Clean bool `yaml:"clean,omitempty"`
+}
+
+// Stat holds the configuration for stat test
+type Stat struct {
 	Skip  bool `yaml:"skip,omitempty"`
 	Clean bool `yaml:"clean,omitempty"`
 }
@@ -75,6 +82,7 @@ type TestCase struct {
 	Ingress   `yaml:"ingress"`
 	Tap       `yaml:"tap"`
 	Edges     `yaml:"edges"`
+	Stat      `yaml:"stat"`
 }
 
 // ConformanceTestOptions holds the values fed from the test config file
@@ -331,6 +339,7 @@ func (options *ConformanceTestOptions) CleanTap() bool {
 	return options.TestCase.Tap.Clean
 }
 
+
 // SkipEdges returns the value of options.TestCase.Edges.Skip
 func (options *ConformanceTestOptions) SkipEdges() bool {
 	return options.TestCase.Edges.Skip
@@ -339,4 +348,14 @@ func (options *ConformanceTestOptions) SkipEdges() bool {
 // CleanEdges returns the value of `options.TestCase.Edges.Clean`
 func (options *ConformanceTestOptions) CleanEdges() bool {
 	return options.TestCase.Edges.Clean
+}
+
+// SkipStat checks if `stat` test must be skipped
+func (options *ConformanceTestOptions) SkipStat() bool {
+	return options.TestCase.Stat.Skip
+}
+
+// CleanStat checks if stat test resources must be deleted
+func (options *ConformanceTestOptions) CleanStat() bool {
+	return options.TestCase.Stat.Clean
 }
